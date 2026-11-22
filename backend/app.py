@@ -129,9 +129,19 @@ def save_settings():
     if not validate_name(station_name) or not validate_name(place) or not validate_name(district):
         return render_template("error.html", message="Invalid characters in input. Only letters, spaces, dots, and hyphens allowed."), 400
 
-    station_name_telugu = english_to_telugu(station_name)
-    place_telugu = english_to_telugu(place)
-    district_telugu = english_to_telugu(district)
+    # Translate to Telugu (optional — settings still save if translation fails)
+    try:
+        station_name_telugu = english_to_telugu(station_name)
+    except Exception:
+        station_name_telugu = ""
+    try:
+        place_telugu = english_to_telugu(place)
+    except Exception:
+        place_telugu = ""
+    try:
+        district_telugu = english_to_telugu(district)
+    except Exception:
+        district_telugu = ""
 
     data = {
         "station_name": station_name,
