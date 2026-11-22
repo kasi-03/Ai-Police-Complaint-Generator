@@ -1,0 +1,49 @@
+# Render.com Blueprint - Deploys Web Service + Redis
+# 1. Push to GitHub
+# 2. Connect at https://dashboard.render.com/blueprints
+# 3. Add GROQ_API_KEY as secret
+
+services:
+  # Main web service
+  - type: web
+    name: csp-police-complaint
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FLASK_DEBUG
+        value: "false"
+      - key: BASE_URL
+        fromService:
+          type: web
+          name: csp-police-complaint
+          property: host
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: csp-redis
+          property: connectionString
+    autoDeploy: true
+    healthCheckPath: /health
+    disk:
+      name: case_records
+      mountPath: /app/case_records
+      sizeGB: 1
+    scaling:
+      minInstances: 1
+      maxInstances: 3
+
+  # Redis instance
+  - type: redis
+    name: csp-redis
+    plan: free
+    maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
+
+# Databases (if needed for PostgreSQL later)
+# databases:
+#   - name: csp-db
+#     plan: free

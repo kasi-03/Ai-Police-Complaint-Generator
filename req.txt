@@ -1,0 +1,7 @@
+flask
+openai-whisper
+google-generativeai
+reportlab
+torch
+torchvision
+torchaudio

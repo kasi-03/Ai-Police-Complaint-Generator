@@ -1,0 +1,66 @@
+# Git
+.git/
+.gitignore
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment files (never commit .env!)
+.env
+.env.local
+.env.production
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Audio files (generated)
+audio/
+case_records/
+generated/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Docker
+.docker/
+Dockerfile*
+docker-compose*
+
+# Distribution
+dist/
+build/
+*.egg-info/
+
+# Playwright cache
+playwright/.cache/
+
+# Claude
+.claude/
+.claude.json
