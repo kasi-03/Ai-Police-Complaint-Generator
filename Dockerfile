@@ -52,6 +52,9 @@ COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
 # Copy application code
 COPY . .
 
+# Ensure sibling imports in backend/ resolve (ai_generator, speech, database...)
+ENV PYTHONPATH=/app/backend
+
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
 USER app

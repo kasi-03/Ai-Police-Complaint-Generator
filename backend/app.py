@@ -56,7 +56,7 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 # Security configuration
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
-app.config['UPLOAD_FOLDER'] = '../audio'
+app.config['UPLOAD_FOLDER'] = '/app/audio'
 
 # Initialize security features
 init_security_headers(app)
@@ -65,8 +65,8 @@ limiter.init_app(app)
 
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs('../case_records', exist_ok=True)
-os.makedirs('../generated', exist_ok=True)
+os.makedirs('/app/case_records', exist_ok=True)
+os.makedirs('/app/generated', exist_ok=True)
 
 init_db()
 
