@@ -7,6 +7,7 @@ services:
   # Main web service
   - type: web
     name: csp-police-complaint
+    plan: free
     runtime: docker
     dockerfilePath: ./Dockerfile
     envVars:
