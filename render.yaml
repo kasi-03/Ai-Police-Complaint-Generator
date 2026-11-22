@@ -32,9 +32,8 @@ services:
       name: case_records
       mountPath: /app/case_records
       sizeGB: 1
-    scaling:
-      minInstances: 1
-      maxInstances: 3
+    # scaling requires targetCPUPercent or targetMemoryPercent
+    # using fixed instances for simplicity on free tier
 
   # Redis instance
   - type: redis
