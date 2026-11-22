@@ -11,10 +11,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir --user -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers
-RUN playwright install chromium
+# Install Playwright browsers (use python -m to ensure playwright is found via PATH)
+RUN python -m playwright install chromium
 RUN playwright install-deps chromium
 
 # Production stage
@@ -43,7 +43,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
+COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=builder /usr/local/bin /usr/local/bin
 
 # Copy Playwright browsers from builder
 COPY --from=builder /root/.cache/ms-playwright /root/.cache/ms-playwright
@@ -54,9 +55,6 @@ COPY . .
 # Create non-root user
 RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app
 USER app
-
-# Add local pip to PATH
-ENV PATH=/root/.local/bin:$PATH
 
 # Expose port
 EXPOSE 5000
