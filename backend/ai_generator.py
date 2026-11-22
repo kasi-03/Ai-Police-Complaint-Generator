@@ -2,21 +2,26 @@ import os
 from dotenv import load_dotenv
 from groq import Groq
 
-load_dotenv()
-
-api_key = os.getenv("GROQ_API_KEY")
-
-if not api_key:
-    raise ValueError("GROQ_API_KEY not found in .env file.")
-
-client = Groq(api_key=api_key)
-
 MODELS = [
     "llama-3.3-70b-versatile",
     "openai/gpt-oss-120b",
     "meta-llama/llama-4-scout-17b-16e-instruct",
     "openai/gpt-oss-20b"
 ]
+
+
+_client = None
+
+
+def _get_client():
+    """Lazily initialize the Groq client so import doesn't fail without GROQ_API_KEY."""
+    global _client
+    if _client is None:
+        api_key = os.getenv("GROQ_API_KEY")
+        if not api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set.")
+        _client = Groq(api_key=api_key)
+    return _client
 
 
 def call_llm(prompt):
@@ -29,7 +34,7 @@ def call_llm(prompt):
 
             print(f"Trying {model}")
 
-            response = client.chat.completions.create(
+            response = _get_client().chat.completions.create(
                 model=model,
                 temperature=0.2,
                 messages=[
