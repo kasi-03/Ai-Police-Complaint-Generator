@@ -28,12 +28,8 @@ services:
           property: connectionString
     autoDeploy: true
     healthCheckPath: /health
-    disk:
-      name: case_records
-      mountPath: /app/case_records
-      sizeGB: 1
-    # scaling requires targetCPUPercent or targetMemoryPercent
-    # using fixed instances for simplicity on free tier
+    # disk: removed for free tier (requires paid plan)
+    # case_records will use ephemeral storage
 
   # Redis instance
   - type: redis
