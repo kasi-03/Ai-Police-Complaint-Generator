@@ -3,18 +3,34 @@ FROM python:3.11-slim as builder
 
 WORKDIR /app
 
-# Install system dependencies
+# Install system dependencies (including Playwright deps)
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
+    libnss3 \
+    libnspr4 \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
+    libatspi2.0-0 \
+    libgtk-3-0 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements and install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Install Playwright browsers (use python -m to ensure playwright is found via PATH)
+# Install Playwright browsers and system dependencies (use python -m to ensure playwright is found via PATH)
 RUN python -m playwright install chromium
+RUN python -m playwright install-deps chromium
 
 # Production stage
 FROM python:3.11-slim
@@ -40,9 +56,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
-
-# Install Playwright system dependencies in production stage
-RUN playwright install-deps chromium
 
 # Copy Python dependencies from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
