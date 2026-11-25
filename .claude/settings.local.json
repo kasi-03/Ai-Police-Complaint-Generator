@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(redis-server --version)",
+      "Bash(docker-compose up *)",
+      "Bash(python app.py)",
+      "Bash(pip show *)",
+      "Bash(curl -s http://127.0.0.1:5000/health)",
+      "Bash(curl -s http://127.0.0.1:5000/)",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/save_settings -d \"station_name=Test&place=Test&district=Test\" -w \"\\\\n%{http_code}\")",
+      "Bash(curl -s -I http://127.0.0.1:5000/)",
+      "Bash(curl -s -X POST http://127.0.0.1:5000/save_settings -d \"station_name=Test@#&place=Test&district=Test\" -w \"\\\\n%{http_code}\")",
+      "Bash(curl -s -w \"\\\\n%{http_code}\" http://127.0.0.1:5000/case_audio/../../etc/passwd)",
+      "Bash(mv static/*.html frontend/ && ls -la frontend/)",
+      "Bash(curl -s http://127.0.0.1:5000/record)",
+      "Bash(curl -s http://127.0.0.1:5000/settings)",
+      "Bash(kill 1369)",
+      "Bash(awk '{print $2}')",
+      "Bash(xargs -r kill)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/view_telugu/13)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/view_english/13)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://127.0.0.1:5000/view_telugu/9999)",
+      "Bash(docker --version)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" https://csp-police-complaint.onrender.com/health)"
+    ]
+  }
+}

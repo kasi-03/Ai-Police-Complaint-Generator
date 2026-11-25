@@ -47,9 +47,9 @@ from security_config import (
     validate_audio_file
 )
 
-# Set template and static folders to frontend directory
+# Set template and static folders
 template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
-static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
+static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static')
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
@@ -152,6 +152,7 @@ def save_settings():
         "district_telugu": district_telugu
     }
 
+    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'station_config.json')
     with open(config_path, "w", encoding="utf-8") as f:
         json.dump(data, f, ensure_ascii=False, indent=4)
 

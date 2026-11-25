@@ -149,11 +149,13 @@ sudo certbot --nginx -d your-domain.com
 
 ```
 CSP_V2/
-├── app.py                 # Main Flask application
-├── ai_generator.py        # Groq LLM integration (prompts, complaint generation)
-├── speech.py              # Speech-to-text (Google + Whisper fallback)
-├── pdf_generator.py       # PDF generation via Playwright
-├── database.py            # SQLite operations
+├── app.py                 # Root Flask entrypoint (Vercel/WSGI)
+├── backend/
+│   ├── app.py             # Main Flask application
+│   ├── ai_generator.py    # Groq LLM integration (prompts, complaint generation)
+│   ├── speech.py          # Speech-to-text
+│   ├── pdf_generator.py   # PDF generation via Playwright
+│   └── database.py        # SQLite operations
 ├── requirements.txt       # Python dependencies
 ├── Dockerfile             # Multi-stage Docker build
 ├── docker-compose.yml     # Local + production orchestration

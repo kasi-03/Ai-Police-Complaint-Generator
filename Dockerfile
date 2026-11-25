@@ -15,14 +15,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # Install Playwright browsers (use python -m to ensure playwright is found via PATH)
 RUN python -m playwright install chromium
-RUN playwright install-deps chromium
 
 # Production stage
 FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install runtime dependencies
+# Install runtime dependencies including Playwright system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 \
     libnspr4 \
@@ -41,6 +40,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgtk-3-0 \
     ffmpeg \
     && rm -rf /var/lib/apt/lists/*
+
+# Install Playwright system dependencies in production stage
+RUN playwright install-deps chromium
 
 # Copy Python dependencies from builder
 COPY --from=builder /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
