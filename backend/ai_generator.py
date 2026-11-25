@@ -2,6 +2,9 @@ import os
 from dotenv import load_dotenv
 from groq import Groq
 
+# Load environment variables
+load_dotenv()
+
 MODELS = [
     "llama-3.3-70b-versatile",
     "openai/gpt-oss-120b",

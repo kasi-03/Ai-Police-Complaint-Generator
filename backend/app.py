@@ -1,6 +1,10 @@
 from flask import Flask, render_template, request
 import os
 import json
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 from pathlib import Path
 import shutil
@@ -200,15 +204,22 @@ def process():
 
     try:
         text = speech_to_text(path)
+        print(f"Speech to text result: {text}")
         cleaned_text = clean_speech(text)
+        print(f"Cleaned text: {cleaned_text}")
         complaint = generate_complaint(cleaned_text, complainant_name_telugu)
+        print(f"Complaint generated: {complaint[:100]}...")
         english = translate_to_english(complaint, complainant_name)
+        print(f"English translation: {english[:100]}...")
         subject = generate_subject(complaint)
+        print(f"Subject: {subject}")
     except Exception as e:
+        import traceback
         print(f"Processing error: {e}")
+        traceback.print_exc()
         return render_template(
             "error.html",
-            message="Unable to process the audio. Please upload a valid audio file or record again."
+            message=f"Processing error: {str(e)}"
         )
 
     complaint_id = save_complaint(

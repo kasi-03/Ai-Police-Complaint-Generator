@@ -1,5 +1,8 @@
 {
-  "station_name": "Police Station",
-  "place": "Place",
-  "district": "District"
+    "station_name": "Duvvada",
+    "place": "Visakhapatnam",
+    "district": "Visakhapatnam",
+    "station_name_telugu": "దువ్వాడ",
+    "place_telugu": "విశాఖపట్నం",
+    "district_telugu": "విశాఖపట్నం"
 }

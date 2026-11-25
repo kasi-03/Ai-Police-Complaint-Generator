@@ -14,17 +14,17 @@ def speech_to_text(audio_path):
     wav_path = audio_path
 
     if extension != ".wav":
+        try:
+            audio = AudioSegment.from_file(audio_path)
 
-        audio = AudioSegment.from_file(audio_path)
+            fd, wav_path = tempfile.mkstemp(suffix=".wav")
+            os.close(fd)
 
-        fd, wav_path = tempfile.mkstemp(suffix=".wav")
-
-        os.close(fd)
-
-        audio.export(
-            wav_path,
-            format="wav"
-        )
+            audio.export(wav_path, format="wav")
+        except Exception as e:
+            print(f"Audio conversion error: {e}")
+            # If conversion fails, try to use the original file
+            wav_path = audio_path
 
     with sr.AudioFile(wav_path) as source:
 
@@ -35,13 +35,19 @@ def speech_to_text(audio_path):
 
         audio_data = recognizer.record(source)
 
-    text = recognizer.recognize_google(
-        audio_data,
-        language="te-IN"
-    )
+    try:
+        text = recognizer.recognize_google(
+            audio_data,
+            language="te-IN"
+        )
+    except sr.UnknownValueError:
+        text = "Speech could not be understood"
+    except sr.RequestError as e:
+        text = f"Speech recognition service error: {e}"
+    except Exception as e:
+        text = f"Speech recognition error: {e}"
 
     if wav_path != audio_path:
-
         try:
             os.remove(wav_path)
         except PermissionError:
