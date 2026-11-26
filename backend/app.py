@@ -213,6 +213,67 @@ def process():
         print(f"English translation: {english[:100]}...")
         subject = generate_subject(complaint)
         print(f"Subject: {subject}")
+
+        complaint_id = save_complaint(
+            registered_on,
+            complainant_name,
+            complainant_name_telugu,
+            phone_number,
+            subject,
+            filename,
+            complaint,
+            english
+        )
+
+        # Create Case Record Folder
+        today = datetime.now()
+        year = today.strftime("%Y")
+        month = today.strftime("%B")
+        date = today.strftime("%d-%m-%Y")
+
+        case_folder_name = (
+            f"C{complaint_id:03d}_"
+            f"{complainant_name.replace(' ', '_')}_"
+            f"{date}"
+        )
+
+        case_folder = Path("case_records", year, month, case_folder_name)
+        case_folder.mkdir(parents=True, exist_ok=True)
+
+        extension = os.path.splitext(filename)[1]
+        audio_name = f"Complaint_Audio{extension}"
+        audio_destination = case_folder / audio_name
+
+        shutil.copy2(path, str(audio_destination))
+
+        update_audio_path(complaint_id, str(audio_destination).replace("\\", "/"))
+
+        # Generate PDFs
+        telugu_pdf = case_folder / "Complaint_Telugu.pdf"
+        generate_telugu_pdf(str(telugu_pdf), complaint_id)
+
+        english_pdf = case_folder / "Complaint_English.pdf"
+        generate_english_pdf(str(english_pdf), complaint_id)
+
+        station = load_station()
+
+        return render_template(
+            "result.html",
+            complaint_id=complaint_id,
+            speech=text,
+            complaint=complaint,
+            subject=subject,
+            complainant_name=complainant_name_telugu,
+            phone_number=phone_number,
+            station_name=station["station_name"],
+            place=station["place"],
+            district=station["district"],
+            station_name_telugu=station["station_name_telugu"],
+            place_telugu=station["place_telugu"],
+            district_telugu=station["district_telugu"],
+            current_date=datetime.now().strftime("%d-%m-%Y"),
+            case_name=case_folder_name
+        )
     except Exception as e:
         import traceback
         print(f"Processing error: {e}")
@@ -221,67 +282,6 @@ def process():
             "error.html",
             message=f"Processing error: {str(e)}"
         )
-
-    complaint_id = save_complaint(
-        registered_on,
-        complainant_name,
-        complainant_name_telugu,
-        phone_number,
-        subject,
-        filename,
-        complaint,
-        english
-    )
-
-    # Create Case Record Folder
-    today = datetime.now()
-    year = today.strftime("%Y")
-    month = today.strftime("%B")
-    date = today.strftime("%d-%m-%Y")
-
-    case_folder_name = (
-        f"C{complaint_id:03d}_"
-        f"{complainant_name.replace(' ', '_')}_"
-        f"{date}"
-    )
-
-    case_folder = Path("case_records", year, month, case_folder_name)
-    case_folder.mkdir(parents=True, exist_ok=True)
-
-    extension = os.path.splitext(filename)[1]
-    audio_name = f"Complaint_Audio{extension}"
-    audio_destination = case_folder / audio_name
-
-    shutil.copy2(path, str(audio_destination))
-
-    update_audio_path(complaint_id, str(audio_destination).replace("\\", "/"))
-
-    # Generate PDFs
-    telugu_pdf = case_folder / "Complaint_Telugu.pdf"
-    generate_telugu_pdf(str(telugu_pdf), complaint_id)
-
-    english_pdf = case_folder / "Complaint_English.pdf"
-    generate_english_pdf(str(english_pdf), complaint_id)
-
-    station = load_station()
-
-    return render_template(
-        "result.html",
-        complaint_id=complaint_id,
-        speech=text,
-        complaint=complaint,
-        subject=subject,
-        complainant_name=complainant_name_telugu,
-        phone_number=phone_number,
-        station_name=station["station_name"],
-        place=station["place"],
-        district=station["district"],
-        station_name_telugu=station["station_name_telugu"],
-        place_telugu=station["place_telugu"],
-        district_telugu=station["district_telugu"],
-        current_date=datetime.now().strftime("%d-%m-%Y"),
-        case_name=case_folder_name
-    )
 
 
 @app.route("/english")
@@ -379,6 +379,11 @@ def serve_case_audio(filepath):
 @app.route("/health")
 def health():
     return {"status": "healthy"}, 200
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template("error.html", message="Internal server error. Please try again."), 500
 
 
 if __name__ == "__main__":
