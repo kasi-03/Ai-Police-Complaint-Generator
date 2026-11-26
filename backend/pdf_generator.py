@@ -6,9 +6,10 @@ import time
 # Set Playwright browsers path for container environments
 os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", "/ms-playwright")
 
-BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:5000")
-# Fallback to localhost for PDF generation when BASE_URL might not be accessible
-LOCAL_URL = "http://127.0.0.1:5000"
+# Build the in-container base URL for Playwright to fetch pages.
+# Render assigns the runtime port via $PORT; default to 5000 for local runs.
+PORT = os.getenv("PORT", "5000")
+BASE_URL = f"http://127.0.0.1:{PORT}"
 
 
 def save_page_as_pdf(url, output_path, max_retries=3):
@@ -64,8 +65,9 @@ def save_page_as_pdf(url, output_path, max_retries=3):
 
 def generate_telugu_pdf(filename, complaint_id):
     """Generate Telugu PDF for a complaint."""
-    # Try BASE_URL first, fallback to LOCAL_URL
-    for base_url in [BASE_URL, LOCAL_URL]:
+    # Try BASE_URL first (preferred), then LOCAL_URL as fallback
+    urls_to_try = [BASE_URL, LOCAL_URL]
+    for base_url in urls_to_try:
         try:
             url = f"{base_url}/view_telugu/{complaint_id}"
             save_page_as_pdf(url, filename)
@@ -79,7 +81,8 @@ def generate_telugu_pdf(filename, complaint_id):
 def generate_english_pdf(filename, complaint_id):
     """Generate English PDF for a complaint."""
     # Try BASE_URL first, fallback to LOCAL_URL
-    for base_url in [BASE_URL, LOCAL_URL]:
+    urls_to_try = [BASE_URL, LOCAL_URL]
+    for base_url in urls_to_try:
         try:
             url = f"{base_url}/view_english/{complaint_id}"
             save_page_as_pdf(url, filename)
