@@ -248,6 +248,9 @@ def process():
 
         update_audio_path(complaint_id, str(audio_destination).replace("\\", "/"))
 
+        # Load station configuration before rendering templates
+        station = load_station()
+
         # Render HTML templates directly to avoid HTTP round-trip issues with gunicorn
         telugu_html = render_template(
             "result.html",
