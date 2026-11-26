@@ -3,6 +3,9 @@ import os
 import time
 
 
+# Set Playwright browsers path for container environments
+os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", "/ms-playwright")
+
 BASE_URL = os.getenv("BASE_URL", "http://127.0.0.1:5000")
 # Fallback to localhost for PDF generation when BASE_URL might not be accessible
 LOCAL_URL = "http://127.0.0.1:5000"
