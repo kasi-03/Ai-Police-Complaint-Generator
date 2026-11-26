@@ -280,12 +280,23 @@ def process():
             case_name=case_folder_name
         )
 
-        # Generate PDFs from rendered HTML
-        telugu_pdf = case_folder / "Complaint_Telugu.pdf"
-        generate_telugu_pdf(str(telugu_pdf), complaint_id, telugu_html)
+        # Generate PDFs from rendered HTML (non-blocking, background thread)
+        import threading
 
-        english_pdf = case_folder / "Complaint_English.pdf"
-        generate_english_pdf(str(english_pdf), complaint_id, english_html)
+        def generate_pdfs_in_thread():
+            try:
+                telugu_pdf = case_folder / "Complaint_Telugu.pdf"
+                generate_telugu_pdf(str(telugu_pdf), complaint_id, telugu_html)
+            except Exception as e:
+                print(f"PDF generation failed (non-critical): {e}")
+            try:
+                english_pdf = case_folder / "Complaint_English.pdf"
+                generate_english_pdf(str(english_pdf), complaint_id, english_html)
+            except Exception as e:
+                print(f"PDF generation failed (non-critical): {e}")
+
+        thread = threading.Thread(target=generate_pdfs_in_thread)
+        thread.start()
 
         station = load_station()
 
