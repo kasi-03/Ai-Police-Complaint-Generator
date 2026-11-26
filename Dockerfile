@@ -78,13 +78,15 @@ ENV PYTHONPATH=/app/backend
 RUN useradd --create-home --shell /bin/bash app && chown -R app:app /app /ms-playwright
 USER app
 
-# Expose port
+# Render assigns PORT at runtime; default to 5000 for local docker runs
+ENV PORT=5000
 EXPOSE 5000
 
-# Health check - use wget instead of curl for smaller footprint, or keep curl since we installed it
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
-    CMD curl -f http://localhost:5000/health || exit 1
+# Health check hits the runtime port
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+    CMD curl -f "http://localhost:${PORT}/health" || exit 1
 
-# Run with gunicorn in production
-# Single worker for SQLite compatibility, use Redis for session/caching
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "1", "--threads", "4", "--timeout", "120", "backend.app:app"]
+# Run with gunicorn in production.
+# Single worker (SQLite), multiple threads. max-requests recycles the worker
+# periodically because headless Chromium leaks memory across Playwright runs.
+CMD ["sh", "-c", "exec gunicorn --bind 0.0.0.0:${PORT:-5000} --workers 1 --threads 4 --timeout 180 --graceful-timeout 30 --max-requests 40 --max-requests-jitter 10 --access-logfile - --error-logfile - backend.app:app"]
