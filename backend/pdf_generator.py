@@ -10,6 +10,7 @@ os.environ.setdefault("PLAYWRIGHT_BROWSERS_PATH", "/ms-playwright")
 # Render assigns the runtime port via $PORT; default to 5000 for local runs.
 PORT = os.getenv("PORT", "5000")
 BASE_URL = f"http://127.0.0.1:{PORT}"
+LOCAL_URL = BASE_URL  # Define LOCAL_URL to match BASE_URL for fallback
 
 
 def save_page_as_pdf(url, output_path, max_retries=3):
