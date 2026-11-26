@@ -248,12 +248,44 @@ def process():
 
         update_audio_path(complaint_id, str(audio_destination).replace("\\", "/"))
 
-        # Generate PDFs
+        # Render HTML templates directly to avoid HTTP round-trip issues with gunicorn
+        telugu_html = render_template(
+            "result.html",
+            complaint_id=complaint_id,
+            speech=text,
+            complaint=complaint,
+            subject=subject,
+            complainant_name=complainant_name_telugu,
+            phone_number=phone_number,
+            station_name=station["station_name"],
+            place=station["place"],
+            district=station["district"],
+            station_name_telugu=station["station_name_telugu"],
+            place_telugu=station["place_telugu"],
+            district_telugu=station["district_telugu"],
+            current_date=datetime.now().strftime("%d-%m-%Y"),
+            case_name=case_folder_name
+        )
+
+        english_html = render_template(
+            "english.html",
+            english=english,
+            subject=translate_subject(complaint),
+            complainant_name=complainant_name,
+            phone_number=phone_number,
+            current_date=datetime.now().strftime("%d-%m-%Y"),
+            station_name=station["station_name"],
+            place=station["place"],
+            district=station["district"],
+            case_name=case_folder_name
+        )
+
+        # Generate PDFs from rendered HTML
         telugu_pdf = case_folder / "Complaint_Telugu.pdf"
-        generate_telugu_pdf(str(telugu_pdf), complaint_id)
+        generate_telugu_pdf(str(telugu_pdf), complaint_id, telugu_html)
 
         english_pdf = case_folder / "Complaint_English.pdf"
-        generate_english_pdf(str(english_pdf), complaint_id)
+        generate_english_pdf(str(english_pdf), complaint_id, english_html)
 
         station = load_station()
 
