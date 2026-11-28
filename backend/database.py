@@ -157,6 +157,7 @@ def invalidate_complaint_cache(complaint_id=None):
     if complaint_id:
         redis_client.delete(f"complaint:{complaint_id}")
     redis_client.delete("complaints:all")
+    redis_client.delete("complaints:statistics")
 
 
 def get_statistics():

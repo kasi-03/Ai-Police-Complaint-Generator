@@ -7,6 +7,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from pathlib import Path
+import mimetypes
 import shutil
 
 from datetime import datetime
@@ -417,9 +418,31 @@ def serve_case_audio(filepath):
     except Exception:
         return "Audio file not found", 404
 
-    if not filepath.exists():
+    if not resolved_path.exists():
         return "Audio file not found", 404
-    return send_file(filepath)
+
+    # Guess MIME type based on file extension; ensure audio files serve as audio
+    mime_type, _ = mimetypes.guess_type(str(resolved_path))
+    if mime_type is None or not mime_type.startswith('audio/'):
+        ext = resolved_path.suffix.lower()
+        if ext == '.webm':
+            mime_type = 'audio/webm'
+        elif ext == '.wav':
+            mime_type = 'audio/wav'
+        elif ext == '.mp3':
+            mime_type = 'audio/mpeg'
+        elif ext == '.m4a':
+            mime_type = 'audio/mp4'
+        elif ext == '.ogg':
+            mime_type = 'audio/ogg'
+        elif ext == '.aac':
+            mime_type = 'audio/aac'
+        elif ext == '.flac':
+            mime_type = 'audio/flac'
+        else:
+            mime_type = 'application/octet-stream'
+
+    return send_file(resolved_path, mimetype=mime_type, as_attachment=False)
 
 
 @app.route("/health")
