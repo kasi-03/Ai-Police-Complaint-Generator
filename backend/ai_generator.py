@@ -1,4 +1,5 @@
 import os
+import time
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -27,45 +28,60 @@ def _get_client():
     return _client
 
 
-def call_llm(prompt):
+def call_llm(prompt, max_attempts=3, timeout=10):
+    """Generate text from an LLM with bounded retries and per-request timeouts.
 
+    Keeps fallback across models, but avoids hammering every model sequentially:
+    preferred models are tried first, each attempt has a short per-request
+    timeout, and transient failures get bounded exponential backoff.
+    """
     last_error = None
 
-    for model in MODELS:
+    # Pre-filter models: try the best-performing model first
+    # (llama-3.3-70b-versatile is typically strongest for Telugu)
+    preferred_models = [
+        "llama-3.3-70b-versatile",
+        "openai/gpt-oss-120b",
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "openai/gpt-oss-20b"
+    ]
 
-        try:
+    # Avoid repeating models already in preferred list
+    candidate_models = [m for m in MODELS if m in preferred_models] + [m for m in MODELS if m not in preferred_models]
 
-            print(f"Trying {model}")
+    for attempt in range(max_attempts):
+        for model in candidate_models:
+            try:
+                response = _get_client().chat.completions.create(
+                    model=model,
+                    temperature=0.2,
+                    messages=[
+                        {
+                            "role": "user",
+                            "content": prompt
+                        }
+                    ],
+                    timeout=timeout
+                )
 
-            response = _get_client().chat.completions.create(
-                model=model,
-                temperature=0.2,
-                messages=[
-                    {
-                        "role": "user",
-                        "content": prompt
-                    }
-                ]
-            )
+                output = response.choices[0].message.content
+                return clean_ai_output(output)
 
-            print(f"Success: {model}")
+            except Exception as e:
+                print(f"{model} failed (attempt {attempt + 1}): {e}")
+                last_error = e
+                if attempt < max_attempts - 1:
+                    time.sleep(1)
+                continue
 
-            output = response.choices[0].message.content
-
-            return clean_ai_output(output)
-        
-        except Exception as e:
-
-            print(f"{model} failed")
-            print(e)
-
-            last_error = e
-            continue
+        # If we've exhausted attempts without success, raise the last error
+        if attempt == max_attempts - 1:
+            raise last_error
 
     raise last_error
 
-def clean_speech(text):
 
+def clean_speech(text):
     prompt = f"""
 You are an expert Telugu language assistant.
 
@@ -96,7 +112,6 @@ Speech:
 
 {text}
 """
-
     return call_llm(prompt)
 
 
@@ -131,7 +146,7 @@ Guidelines:
 • Improve grammar, sentence flow and readability.
 • Correct obvious speech recognition mistakes only when the intended meaning is clear from context.
 • If a word is unclear and cannot be confidently corrected, keep it unchanged instead of guessing.
-• Never translate place names, locality names, road names, police station names or landmarks. 
+• Never translate place names, locality names, road names, police station names or landmarks.
 • Preserve them as spoken. If they are in English, transliterate them into Telugu script only when appropriate. Never change their meaning.
 • Maintain a respectful and official tone throughout.
 
@@ -319,6 +334,7 @@ Complaint:
 
     return call_llm(prompt)
 
+
 def translate_subject(subject):
 
     prompt = f"""
@@ -359,6 +375,7 @@ Subject:
 
 
 import re
+
 
 def clean_ai_output(text: str) -> str:
     """

@@ -365,46 +365,91 @@ return;
 
 }
 
+try {
+
 stream = await navigator.mediaDevices.getUserMedia({
     audio: true
 });
 
-mediaRecorder=new MediaRecorder(stream);
+} catch (err) {
+
+document.getElementById("status").innerHTML =
+    "Microphone access denied";
+
+return;
+
+}
 
 chunks=[];
 
+// Prefer Opus in WebM; fall back to whatever the browser supports.
+let options = {};
+
+if (window.MediaRecorder) {
+
+const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/ogg;codecs=opus",
+    "audio/mp4"
+];
+
+for (const c of candidates) {
+
+    if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(c)) {
+
+        options = { mimeType: c };
+
+        break;
+
+    }
+
+}
+
+}
+
+mediaRecorder = new MediaRecorder(stream, options);
+
 mediaRecorder.ondataavailable=e=>{
 
+if (e.data && e.data.size > 0) {
+
 chunks.push(e.data);
+
+}
 
 };
 
 mediaRecorder.onstop = () => {
 
-    const blob = new Blob(chunks, {
-        type: "audio/webm"
-    });
+    const mimeType = mediaRecorder.mimeType || "audio/webm";
 
-    document.getElementById("player").src =
-        URL.createObjectURL(blob);
+    const blob = new Blob(chunks, { type: mimeType });
 
-    // Create a File object from the recording
-    const file = new File(
-        [blob],
-        "recorded.webm",
-        {
-            type: "audio/webm"
-        }
-    );
+    if (blob.size === 0) {
 
-    // Put the file into the hidden input
+        document.getElementById("status").innerHTML =
+            "❌ No audio recorded. Please try again.";
+
+        return;
+
+    }
+
+    const ext = mimeType.indexOf("ogg") !== -1 ? "ogg"
+              : mimeType.indexOf("mp4") !== -1 ? "m4a"
+              : "webm";
+
+    document.getElementById("player").src = URL.createObjectURL(blob);
+
+    const file = new File([blob], "recorded." + ext, { type: mimeType });
+
     const dt = new DataTransfer();
 
     dt.items.add(file);
 
-    document
-        .getElementById("recordedAudio")
-        .files = dt.files;
+    document.getElementById("recordedAudio").files = dt.files;
+
+    document.getElementById("status").innerHTML = "✅ Recording Completed";
 
 };
 
@@ -434,7 +479,10 @@ String(s).padStart(2,"0");
 
 function stopRecording(){
 
-    if(!mediaRecorder) return;
+    if(!mediaRecorder || mediaRecorder.state !== "recording") return;
+
+    document.getElementById("status").innerHTML =
+        "⏳ Finalizing recording...";
 
     mediaRecorder.stop();
 
@@ -446,10 +494,38 @@ function stopRecording(){
 
     }
 
-    document.getElementById("status").innerHTML =
-        "✅ Recording Completed";
-
 }
+
+document.querySelector("form").addEventListener("submit", function(e){
+
+    const upload = document.querySelector('input[name="audio"]');
+    const recorded = document.getElementById("recordedAudio");
+
+    const hasRecorded = recorded.files && recorded.files.length > 0;
+    const hasUpload = upload && upload.files && upload.files.length > 0;
+
+    if (!hasRecorded && !hasUpload) {
+
+        e.preventDefault();
+
+        alert("Please record or upload audio before generating the complaint.");
+
+        return;
+
+    }
+
+    const btn = this.querySelector('button[type="submit"]');
+
+    if (btn) {
+
+        btn.disabled = true;
+
+        btn.innerHTML = "Generating... please wait";
+
+    }
+
+});
+
 </script>
 
 </body>

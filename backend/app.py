@@ -52,26 +52,33 @@ from security_config import (
     validate_audio_file
 )
 
+# Project root works identically on Windows and Linux
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 # Set template and static folders
-template_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'frontend')
-static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'static')
+template_dir = str(PROJECT_ROOT / 'frontend')
+static_dir = str(PROJECT_ROOT / 'static')
 
 app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 
 # Security configuration
 app.config['SECRET_KEY'] = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
 app.config['MAX_CONTENT_LENGTH'] = 50 * 1024 * 1024  # 50MB max upload
-app.config['UPLOAD_FOLDER'] = '/app/audio'
+
+# Configurable storage locations (override via env vars in production)
+app.config['UPLOAD_FOLDER'] = os.getenv("UPLOAD_FOLDER", str(PROJECT_ROOT / "audio"))
+CASE_RECORDS_DIR = Path(os.getenv("CASE_RECORDS_DIR", str(PROJECT_ROOT / "case_records")))
+GENERATED_DIR = Path(os.getenv("GENERATED_DIR", str(PROJECT_ROOT / "generated")))
 
 # Initialize security features
 init_security_headers(app)
 init_cors(app)
 limiter.init_app(app)
 
-# Ensure directories exist
+# Ensure directories exist (cross-platform)
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
-os.makedirs('/app/case_records', exist_ok=True)
-os.makedirs('/app/generated', exist_ok=True)
+CASE_RECORDS_DIR.mkdir(parents=True, exist_ok=True)
+GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 
 init_db()
 
@@ -198,6 +205,14 @@ def process():
     if not validate_audio_file(filename):
         return render_template("error.html", message="Invalid audio file format. Allowed: wav, mp3, m4a, ogg, webm, aac, flac"), 400
 
+    # Prevent duplicate submissions - check if case folder already exists
+    case_id = request.form.get("complaint_id", "").strip()
+    case_folder_name = request.form.get("case_name", "").strip()
+    if case_id and case_folder_name:
+        case_folder = Path("case_records", case_folder_name.split("_")[0], case_folder_name.split("_")[-1])
+        if case_folder.exists():
+            return render_template("error.html", message="Complaint already submitted for this case."), 400
+
     path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
     audio.save(path)
 
@@ -213,6 +228,7 @@ def process():
         english = translate_to_english(complaint, complainant_name)
         print(f"English translation: {english[:100]}...")
         subject = generate_subject(complaint)
+        english_subject = translate_subject(subject)
         print(f"Subject: {subject}")
 
         complaint_id = save_complaint(
@@ -274,7 +290,7 @@ def process():
         english_html = render_template(
             "english.html",
             english=english,
-            subject=translate_subject(complaint),
+            subject=english_subject,
             complainant_name=complainant_name,
             phone_number=phone_number,
             current_date=datetime.now().strftime("%d-%m-%Y"),
@@ -407,11 +423,9 @@ from flask import send_file
 @app.route("/case_audio/<path:filepath>")
 def serve_case_audio(filepath):
     # Prevent path traversal
-    filepath = Path(filepath)
-    # Resolve to absolute path and ensure it's within case_records
     try:
-        resolved_path = filepath.resolve()
-        case_records_root = Path("case_records").resolve()
+        resolved_path = (CASE_RECORDS_DIR / filepath).resolve()
+        case_records_root = CASE_RECORDS_DIR.resolve()
         # Check if the resolved path is within case_records directory
         if not str(resolved_path).startswith(str(case_records_root)):
             return "Audio file not found", 404
