@@ -17,7 +17,16 @@ except Exception as e:
 
 CACHE_TTL = 300  # 5 minutes
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'complaints.db')
+DB_PATH = os.getenv(
+    "DATABASE_PATH",
+    os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'complaints.db')
+)
+
+# Ensure the database directory exists (matters when DATABASE_PATH points at a
+# Render persistent disk mount or a custom folder on Windows).
+_db_dir = os.path.dirname(os.path.abspath(DB_PATH))
+if _db_dir and not os.path.exists(_db_dir):
+    os.makedirs(_db_dir, exist_ok=True)
 
 
 def get_db_connection():
